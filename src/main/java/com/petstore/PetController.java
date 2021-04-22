@@ -1,7 +1,7 @@
 package com.petstore;
 
-import at.spar.mobile.vtc.task.api.PetApi;
-import at.spar.mobile.vtc.task.model.Pet;
+import com.petstore.api.PetApi;
+import com.petstore.model.Pet;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
