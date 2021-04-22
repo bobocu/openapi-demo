@@ -1,0 +1,107 @@
+plugins {
+    id 'org.springframework.boot' version '2.4.5'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+    id 'org.openapi.generator' version '5.1.0'
+}
+
+group = 'com.petstore'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    set('springCloudVersion', "2020.0.2")
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    //implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+
+    implementation group: 'io.springfox', name: 'springfox-boot-starter', version: '3.0.0'
+    // https://mvnrepository.com/artifact/javax.validation/validation-api
+    implementation group: 'javax.validation', name: 'validation-api', version: '2.0.1.Final'
+    // https://mvnrepository.com/artifact/org.openapitools/jackson-databind-nullable
+    implementation group: 'org.openapitools', name: 'jackson-databind-nullable', version: '0.2.1'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+
+    runtimeOnly (
+            'com.h2database:h2',
+    )
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
+
+openApiGenerate {
+    generatorName = 'spring'
+    inputSpec = "$rootDir/src/main/resources/static/api.yaml"
+    outputDir = "$projectDir/build/generated-openapi"
+    apiPackage = "com.petstore.api"
+    modelPackage = "com.petstore.model"
+    generateAliasAsModel = false
+    configOptions = [
+            'library'                : 'spring-boot',
+            'sourceFolder'           : '',
+            'hideGenerationTimestamp': 'true',
+            'interfaceOnly'          : 'true',
+            'unhandledException'     : 'true',
+            'useTags'                : 'true',
+            'implicitHeaders'        : 'true',
+            'delegatePattern'        : 'true'
+    ]
+    typeMappings = [
+            'OffsetDateTime': 'LocalDateTime'
+    ]
+    importMappings = [
+            'Pageable'                : 'org.springframework.data.domain.Pageable',
+            'java.time.OffsetDateTime': 'java.time.LocalDateTime'
+    ]
+    // Only generates apis and models. Everything else is omitted
+    globalProperties = [
+            apis           : '',
+            models         : '',
+            supportingFiles: 'ApiUtil.java'
+    ]
+}
+
+openApiValidate {
+    inputSpec = "$rootDir/src/main/resources/static/api.yaml"
+}
+
+task cleanGeneratedFiles {
+    doLast {
+        delete("build/generated")
+        delete("out")
+    }
+}
+
+compileJava.dependsOn tasks.openApiGenerate, cleanGeneratedFiles
+
+sourceSets {
+    main.java.srcDirs = ['src/main/java', '/build/generated', 'build/generated-openapi/']
+}
